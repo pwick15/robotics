@@ -95,7 +95,7 @@ def my_Gauss_filter(noisy, ksize, sigma):
 if __name__ == "__main__":
     args = parse_arguments()
     image_path = args.image_path
-
+ 
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
     noised = addGausNoise(img, 0, 15)
