@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from scipy.ndimage import convolve
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Image processing tasks.')
