@@ -3,31 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
-CANNY_THRESHOLD_LOWER = 400
-CANNY_THRESHOLD_UPPER = 150
-RADIUS_LOWER = 10
-RADIUS_UPPER = 35
-RADIUS_STEP = 2
-NUM_THETA = 45
-VOTES_THRESHOLD = 0.5
-EDGE_THRESHOLD = 10
-KSIZE = 50
-NMS_THRESHOLD = 0.5
-
-gray_image = cv2.imread("computer-vision/data/coins.png")
-
-if len(gray_image.shape) > 2:
-    gray_image = cv2.cvtColor(gray_image, cv2.COLOR_BGR2GRAY)
-
-# FIXME remove these plots and put them all at the end
-plt.imshow(gray_image, cmap='gray')
-plt.show()
-
-# FIXME remove these plots and put them all at the end
-edges = cv2.Canny(gray_image, CANNY_THRESHOLD_LOWER, CANNY_THRESHOLD_UPPER)
-plt.imshow(edges, cmap='gray')
-plt.show()
-
 
 def draw_circles(image, circle_params, color, thickness):
     # Convert the grayscale image to a 3-channel image
@@ -79,20 +54,7 @@ def hough_circle_transform(edges, radius_range, radius_step, num_thetas, votes_t
                 if accumulator[a, b, r_idx] / max_votes > votes_threshold:
                     output_circles.append((a, b, r_idx*radius_step + radius_range[0]))
 
-    return accumulator, output_circles, np.array(range(RADIUS_LOWER, RADIUS_UPPER, RADIUS_STEP))
-
-
-acc, out, radii = hough_circle_transform(edges = edges, 
-                                 radius_range=(RADIUS_LOWER,RADIUS_UPPER), 
-                                 radius_step = RADIUS_STEP, 
-                                 num_thetas = NUM_THETA, 
-                                 votes_threshold = VOTES_THRESHOLD,
-                                 edge_threshold=EDGE_THRESHOLD)
-
-circled = draw_circles(gray_image, out, (0,0,255), 1)
-plt.imshow(cv2.cvtColor(circled, cv2.COLOR_BGR2RGB))
-plt.axis('off')
-plt.show()
+    return accumulator, output_circles, np.array(range(radius_range[0], radius_range[1], radius_step))
 
 
 def compress3dto2d(all_votes, all_radii):
@@ -144,11 +106,50 @@ def nms(votes, radii, ksize, thresh):
     return good_circles
 
 
-radii, votes = compress3dto2d(acc, radii)
-good_circles = nms(votes, radii, KSIZE, NMS_THRESHOLD)
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Circle Detection Parameters')
+    parser.add_argument('image_path', type=str, help='Path to the input image')
+    parser.add_argument('--canny_threshold_lower', type=int, default=400, help='Lower threshold for Canny edge detection')
+    parser.add_argument('--canny_threshold_upper', type=int, default=150, help='Upper threshold for Canny edge detection')
+    parser.add_argument('--radius_lower', type=int, default=10, help='Lower bound of the radius range')
+    parser.add_argument('--radius_upper', type=int, default=35, help='Upper bound of the radius range')
+    parser.add_argument('--radius_step', type=int, default=2, help='Step size for radius iteration')
+    parser.add_argument('--num_theta', type=int, default=45, help='Number of theta values for circle parameterization')
+    parser.add_argument('--votes_threshold', type=float, default=0.5, help='Votes threshold for circle detection')
+    parser.add_argument('--edge_threshold', type=int, default=10, help='Threshold for edge detection')
+    parser.add_argument('--ksize', type=int, default=50, help='Kernel size for NMS')
+    parser.add_argument('--nms_threshold', type=float, default=0.5, help='Threshold for NMS')
 
-circled = draw_circles(gray_image, good_circles, (0,0,255), 1)
-plt.imshow(cv2.cvtColor(circled, cv2.COLOR_BGR2RGB))
-plt.axis('off')
-plt.show()
+    args = parser.parse_args()
+    gray_image = cv2.imread(args.image_path)
+
+    if len(gray_image.shape) > 2:
+        gray_image = cv2.cvtColor(gray_image, cv2.COLOR_BGR2GRAY)
+
+    plt.imshow(gray_image, cmap='gray')
+    plt.show()
+
+    edges = cv2.Canny(gray_image, args.canny_threshold_lower, args.canny_threshold_upper)
+    plt.imshow(edges, cmap='gray')
+    plt.show()
+
+    acc, out, radii = hough_circle_transform(edges=edges,
+                                             radius_range=(args.radius_lower, args.radius_upper),
+                                             radius_step=args.radius_step,
+                                             num_thetas=args.num_theta,
+                                             votes_threshold=args.votes_threshold,
+                                             edge_threshold=args.edge_threshold)
+
+    circled = draw_circles(gray_image, out, (0, 0, 255), 1)
+    plt.imshow(cv2.cvtColor(circled, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+    plt.show()
+
+    radii, votes = compress3dto2d(acc, radii)
+    good_circles = nms(votes, radii, args.ksize, args.nms_threshold)
+
+    circled = draw_circles(gray_image, good_circles, (0, 0, 255), 1)
+    plt.imshow(cv2.cvtColor(circled, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+    plt.show()
