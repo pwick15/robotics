@@ -206,20 +206,21 @@ def warp_and_plot(pts1, pts2, img1, img2, thresholds):
     return Hs, thresholds
 
 if __name__ == '__main__':
-    
-    RATIO_TEST_THRESHOLD = 0.7
-    DISTANCE_THRESHOLD = 500
-    NUM_POINTS = 50
-    ITERATIONS = 1000
 
-    # FIXME remove absolute path and use relative path
-    img1_path = "/Users/punjayawickramasinghe/Documents/projects-python/computer-vision/data/mountain1.jpg"
-    img2_path = "/Users/punjayawickramasinghe/Documents/projects-python/computer-vision/data/mountain2.jpg"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("img1_path", help="Path to first image")
+    parser.add_argument("img2_path", help="Path to second image")
+    parser.add_argument("--ratio_test_threshold", type=float, default=0.7, help="Threshold for ratio test in feature matching")
+    parser.add_argument("--distance_threshold", type=int, default=500, help="Distance threshold for RANSAC")
+    parser.add_argument("--num_points", type=int, default=50, help="Number of points for RANSAC")
+    parser.add_argument("--iterations", type=int, default=1000, help="Number of iterations for RANSAC")
 
-    img1 = cv2.imread(img1_path)
+    args = parser.parse_args()
+
+    img1 = cv2.imread(args.img1_path)
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
 
-    img2 = cv2.imread(img2_path)
+    img2 = cv2.imread(args.img2_path)
     img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
 
     fig, ax = plt.subplots(1,2)
@@ -229,7 +230,7 @@ if __name__ == '__main__':
     ax[1].set_title("Image 2")
     plt.show()
 
-    base_points, trans_points = matching_features(img1,img2,RATIO_TEST_THRESHOLD)
+    base_points, trans_points = matching_features(img1,img2,args.ratio_test_threshold)
 
     H = homography_w_normalisation(trans_points[:,0], trans_points[:,1], base_points[:,0], base_points[:,1], img1, img2)
     img1_warped = cv2.warpPerspective(img1, H, (img1.shape[1] + img2.shape[1], img1.shape[0]))
@@ -239,12 +240,11 @@ if __name__ == '__main__':
     ax.set_title("Homography Before RANSAC")
 
     # load in the previous established points
-    pts1 = np.load('/Users/punjayawickramasinghe/Documents/projects-python/computer-vision/data/src_pts.npy')
-    pts2 = np.load('/Users/punjayawickramasinghe/Documents/projects-python/computer-vision/data/dst_pts.npy')
-
+    pts1 = np.load('../data/src_pts.npy')
+    pts2 = np.load('../data/dst_pts.npy')
 
     # calling the function with some base and transformed points, an image pair, distance threshold, number of points and iterations
-    H_no_ransac, inliers = homography_w_normalisation_ransac(pts1, pts2, img1, img2, DISTANCE_THRESHOLD, NUM_POINTS, ITERATIONS)
+    H_no_ransac, inliers = homography_w_normalisation_ransac(pts1, pts2, img1, img2, args.distance_threshold, args.num_points, args.iterations)
     img1_warped = cv2.warpPerspective(img1, H_no_ransac, (img1.shape[1] + img2.shape[1], img1.shape[0]))
     img1_warped[0:img2.shape[0], 0:img2.shape[1]] = img2
     fig,ax = plt.subplots()
