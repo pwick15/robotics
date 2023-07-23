@@ -1,0 +1,9 @@
+close all
+
+addpath("/Users/punjayawickramasinghe/Documents/University/2022/Semester2/robotics/Labs/ENGNX627_code/simulator");
+
+% Loading collected data
+load('/Users/punjayawickramasinghe/Documents/University/2022/Semester2/robotics/Labs/ENGNX627_code/lab4slam/lab4_code/lab4slam_v2/data_slam_v2.mat');
+data = table2cell(table);
+true_xs = cell2mat(data(:,1));
+true_ys = cell2mat(data(:,2));
